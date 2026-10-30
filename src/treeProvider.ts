@@ -48,6 +48,15 @@ interface CheckboxStateInfo {
     timestamp: number; // When the checkbox was checked
 }
 
+/** The base-side counterpart of a working tree file, used for gutter (quick diff) indicators. */
+export interface GutterDiffBase {
+    /** Path of the file at the base ref; differs from the working tree path for renames. */
+    srcAbsPath: string;
+    ref: string;
+    /** The file does not exist at the base ref (added or untracked). */
+    isNew: boolean;
+}
+
 class FileElement implements IDiffStatus {
     modificationDate?: Date;
 
@@ -659,6 +668,10 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
     private _onDidChangeRepository = new EventEmitter<void>();
     readonly onDidChangeRepository: Event<void> = this._onDidChangeRepository.event;
 
+    // Fired whenever any comparison was recomputed, added or removed.
+    private _onDidChangeComparisons = new EventEmitter<void>();
+    readonly onDidChangeComparisons: Event<void> = this._onDidChangeComparisons.event;
+
     fireTreeDataChange() {
         this.parentMap.clear();
         this.elementMap.clear();
@@ -687,6 +700,7 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
     sortOrder: SortOrder;
     private autoReveal: boolean;
     showDiffStats: boolean;
+    private showGutterDiff: boolean;
 
     // One comparison per repository, keyed by canonical repository root.
     private comparisons = new Map<FolderAbsPath, RepositoryComparison>();
@@ -905,6 +919,56 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
         if (comparison === this.commitsComparison) {
             this._onDidChangeComparison.fire();
         }
+        this._onDidChangeComparisons.fire();
+    }
+
+    /**
+     * Resolves what a working tree file should be compared against in the editor
+     * gutter. Files that are not part of the diff still resolve to the base ref,
+     * so that edits show up immediately, before the next diff refresh.
+     */
+    resolveGutterDiffBase(absPath: string): GutterDiffBase | undefined {
+        const comparison = this.findComparisonForPath(absPath);
+        if (!comparison || !comparison.isLoaded || comparison.commitFilter.kind === 'empty') {
+            return undefined;
+        }
+        const normPath = normalizePath(absPath);
+        // findComparisonForPath also matches paths inside the git dir.
+        if (!normPath.startsWith(comparison.repoRoot + path.sep)) {
+            return undefined;
+        }
+        const { leftRef, rightRef } = comparison.getDiffEndpoints();
+        if (rightRef !== null) {
+            // The diff is between two commits, the working tree is not involved.
+            return undefined;
+        }
+        const status = comparison.findFile(normPath);
+        return {
+            srcAbsPath: status?.srcAbsPath ?? normPath,
+            ref: leftRef,
+            isNew: status?.status === 'A' || status?.status === 'U',
+        };
+    }
+
+    /**
+     * A fingerprint of everything resolveGutterDiffBase() depends on, so that
+     * gutter indicators only need to be recomputed when it changes.
+     */
+    getGutterDiffState(): string {
+        const parts: string[] = [];
+        for (const comparison of this.comparisons.values()) {
+            if (!comparison.isLoaded) {
+                continue;
+            }
+            const { leftRef, rightRef } = comparison.getDiffEndpoints();
+            parts.push(`${comparison.repoRoot}\0${leftRef}\0${rightRef}\0${comparison.commitFilter.kind}`);
+            for (const file of comparison.iterFiles()) {
+                if (file.status === 'A' || file.status === 'U' || file.srcAbsPath !== file.dstAbsPath) {
+                    parts.push(`${file.status}\0${file.srcAbsPath}\0${file.dstAbsPath}`);
+                }
+            }
+        }
+        return parts.join('\n');
     }
 
     getCommitsComparison(): ComparisonInfo | undefined {
@@ -1255,6 +1319,7 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
         this.disposeExtraRepositoryWatchers();
         this.fireTreeDataChange();
         this._onDidChangeComparison.fire();
+        this._onDidChangeComparisons.fire();
         this.log('No repository selected');
 
         this.updateViewState();
@@ -1579,6 +1644,7 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
         if (this.activeComparison === comparison) {
             this.activeComparison = undefined;
         }
+        this._onDidChangeComparisons.fire();
         if (previousCommitsComparison === comparison) {
             // The commits list was showing this repository; drop the binding so it
             // falls back instead of keeping the removed repository's commits, whose
@@ -1755,6 +1821,7 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
         this.sortOrder = config.get<SortOrder>('sortOrder', 'path');
         this.autoReveal = config.get<boolean>('autoReveal', true);
         this.showDiffStats = config.get<boolean>('showDiffStats', false);
+        this.showGutterDiff = config.get<boolean>('showGutterDiff', false);
     }
 
     getTreeItem(element: Element): TreeItem {
@@ -1939,7 +2006,8 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
         this.refreshInProgress = true;
         try {
             while (this.pendingRefreshRoots.size > 0 && !this.disposed) {
-                if (!window.state.focused || !this.treeView.visible) {
+                // Gutter indicators are visible in editors even when the tree is not.
+                if (!window.state.focused || (!this.treeView.visible && !this.showGutterDiff)) {
                     await this.waitUntilFocusedAndVisible();
                     continue;
                 }
@@ -2034,6 +2102,7 @@ export class GitTreeCompareProvider implements TreeDataProvider<Element>, Dispos
                 this.reportedLoadErrors.clear();
                 this.pendingRefreshRoots.clear();
                 this.disposeExtraRepositoryWatchers();
+                this._onDidChangeComparisons.fire();
                 if (!this.showRepositoryNodes()) {
                     const gitRepos = this.getRepositoryRoots(true);
                     if (gitRepos.length > 0) {

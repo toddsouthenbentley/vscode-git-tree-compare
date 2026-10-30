@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Remember the tree/list view mode across restarts via the new `viewMode` setting [#162](https://github.com/letmaik/vscode-git-tree-compare/issues/162)
+* Add optional editor gutter change indicators relative to the comparison base via the new `showGutterDiff` setting [#83](https://github.com/letmaik/vscode-git-tree-compare/issues/83)
 
 ## 1.21.0
 

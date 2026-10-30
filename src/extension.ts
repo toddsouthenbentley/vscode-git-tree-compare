@@ -3,6 +3,7 @@ import { ExtensionContext, window, Disposable, commands, extensions, workspace }
 import { NAMESPACE } from './constants'
 import { GitTreeCompareProvider } from './treeProvider';
 import { CommitsTreeProvider } from './commitsProvider';
+import { GutterDiffController } from './gutterDiff';
 import { createGit } from './gitHelper';
 import { toDisposable } from './git/util';
 import { GitExtension } from './typings/git';
@@ -105,6 +106,8 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand(NAMESPACE + '.hideCheckboxes', () => {
         runAfterInit(() => provider!.hideCheckboxes(true));
     });
+    commands.registerCommand(NAMESPACE + '.showGutterDiff', () => GutterDiffController.setEnabled(true));
+    commands.registerCommand(NAMESPACE + '.hideGutterDiff', () => GutterDiffController.setEnabled(false));
     commands.registerCommand(NAMESPACE + '.viewAsList', () => {
         runAfterInit(() => provider!.viewAsTree(false));
     });
@@ -187,6 +190,7 @@ export function activate(context: ExtensionContext) {
         );
 
         disposables.push(provider, treeView);
+        disposables.push(new GutterDiffController(provider));
         void provider.init(treeView).catch(error => {
             outputChannel.appendLine(`Initializing Git Tree Compare failed: ${error.message}`);
             window.showErrorMessage(`Initializing Git Tree Compare failed: ${error.message}`);

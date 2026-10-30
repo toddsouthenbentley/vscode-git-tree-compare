@@ -114,4 +114,6 @@ comparison changes (a new base, or new commits on `HEAD`).
 
 `gitTreeCompare.showDiffStats` When enabled, shows insertion/deletion counts (+N -N) next to each file name in the tree view. Default is disabled.
 
+`gitTreeCompare.showGutterDiff` When enabled, shows VS Code's native change indicators in the editor gutter (and overview ruler) relative to the comparison base, including the inline peek diff when clicking an indicator. These appear alongside the Git extension's own indicators for uncommitted changes; each set can be hidden via the context menu of a gutter indicator. Can also be toggled with the "Show/Hide Changes in Editor Gutter" actions in the tree menu. Note: this adds a "Git Tree Compare" entry to the Source Control view. Default is disabled.
+
 `gitTreeCompare.multiRepositoryView` [EXPERIMENTAL] When enabled and the workspace contains more than one Git repository, the tree shows one expanded section per repository instead of comparing a single active repository. Each repository keeps its own comparison base, filter and checkbox state. Workspaces with a single repository are unaffected. Default is disabled.

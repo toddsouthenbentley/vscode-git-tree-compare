@@ -180,6 +180,16 @@
                 "category": "Git Tree Compare"
             },
             {
+                "command": "gitTreeCompare.showGutterDiff",
+                "title": "Show Changes in Editor Gutter",
+                "category": "Git Tree Compare"
+            },
+            {
+                "command": "gitTreeCompare.hideGutterDiff",
+                "title": "Hide Changes in Editor Gutter",
+                "category": "Git Tree Compare"
+            },
+            {
                 "command": "gitTreeCompare.viewAsList",
                 "title": "View as List",
                 "icon": "$(list-flat)",
@@ -310,6 +320,14 @@
                 {
                     "command": "gitTreeCompare.commits.refresh",
                     "when": "config.gitTreeCompare.showCommitsPanel"
+                },
+                {
+                    "command": "gitTreeCompare.showGutterDiff",
+                    "when": "!config.gitTreeCompare.showGutterDiff"
+                },
+                {
+                    "command": "gitTreeCompare.hideGutterDiff",
+                    "when": "config.gitTreeCompare.showGutterDiff"
                 }
             ],
             "gitTreeCompare.viewAndSort": [
@@ -416,6 +434,16 @@
                 {
                     "command": "gitTreeCompare.hideCheckboxes",
                     "when": "view == gitTreeCompare && config.gitTreeCompare.showCheckboxes",
+                    "group": "3_options"
+                },
+                {
+                    "command": "gitTreeCompare.showGutterDiff",
+                    "when": "view == gitTreeCompare && !config.gitTreeCompare.showGutterDiff",
+                    "group": "3_options"
+                },
+                {
+                    "command": "gitTreeCompare.hideGutterDiff",
+                    "when": "view == gitTreeCompare && config.gitTreeCompare.showGutterDiff",
                     "group": "3_options"
                 },
                 {
@@ -757,6 +785,11 @@
                 "gitTreeCompare.resetCheckboxOnFileChange": {
                     "type": "boolean",
                     "description": "When enabled, automatically resets checkboxes when a file is modified after being checked. This ensures that checked files reflect their reviewed state, and any subsequent modifications require re-review.",
+                    "default": false
+                },
+                "gitTreeCompare.showGutterDiff": {
+                    "type": "boolean",
+                    "markdownDescription": "Whether to show change indicators in the editor gutter relative to the comparison base, in addition to the Git extension's indicators for uncommitted changes. Indicators of an individual provider can be hidden from the context menu of a gutter indicator. Note: this adds a \"Git Tree Compare\" entry to the Source Control view.",
                     "default": false
                 },
                 "gitTreeCompare.refSortOrder": {
