@@ -187,6 +187,13 @@
             {
                 "command": "gitTreeCompare.hideGutterDiff",
                 "title": "Hide Changes in Editor Gutter",
+                "icon": "$(eye-closed)",
+                "category": "Git Tree Compare"
+            },
+            {
+                "command": "gitTreeCompare.gutterDiffInfo",
+                "title": "Due to VS Code API limitations, this entry is required to show changes against the Git Tree Compare base in the editor gutter. It has no other function.",
+                "icon": "$(info)",
                 "category": "Git Tree Compare"
             },
             {
@@ -308,7 +315,23 @@
             }
         ],
         "menus": {
+            "scm/title": [
+                {
+                    "command": "gitTreeCompare.gutterDiffInfo",
+                    "when": "scmProvider == gitTreeCompare",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitTreeCompare.hideGutterDiff",
+                    "when": "scmProvider == gitTreeCompare",
+                    "group": "navigation@2"
+                }
+            ],
             "commandPalette": [
+                {
+                    "command": "gitTreeCompare.gutterDiffInfo",
+                    "when": "false"
+                },
                 {
                     "command": "gitTreeCompare.commits.selectAll",
                     "when": "config.gitTreeCompare.showCommitsPanel"

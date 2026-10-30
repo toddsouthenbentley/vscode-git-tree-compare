@@ -65,6 +65,8 @@ export class GutterDiffController implements Disposable {
         const enabled = workspace.getConfiguration(NAMESPACE).get<boolean>(SETTING, false);
         if (enabled && !this.sourceControl) {
             const sourceControl = scm.createSourceControl(NAMESPACE, 'Git Tree Compare');
+            // The entry can't be hidden with the stable API; its header has an info
+            // button explaining why it is there.
             sourceControl.inputBox.visible = false;
             sourceControl.quickDiffProvider = this.quickDiffProvider;
             this.state = this.host.getGutterDiffState();

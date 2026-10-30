@@ -108,6 +108,8 @@ export function activate(context: ExtensionContext) {
     });
     commands.registerCommand(NAMESPACE + '.showGutterDiff', () => GutterDiffController.setEnabled(true));
     commands.registerCommand(NAMESPACE + '.hideGutterDiff', () => GutterDiffController.setEnabled(false));
+    // Only exists to show its title as a tooltip on the source control entry.
+    commands.registerCommand(NAMESPACE + '.gutterDiffInfo', () => {});
     commands.registerCommand(NAMESPACE + '.viewAsList', () => {
         runAfterInit(() => provider!.viewAsTree(false));
     });
